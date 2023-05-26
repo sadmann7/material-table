@@ -1,15 +1,16 @@
-import { SiteHeader } from "@/components/site-header";
-import { fontMono, fontSans } from "@/lib/fonts";
-import "@/styles/globals.css";
-import type { Metadata } from "next";
+import { fontMono, fontSans } from "@/lib/fonts"
+import { SiteHeader } from "@/components/site-header"
+
+import "@/styles/globals.css"
+import type { Metadata } from "next"
 
 export const metadata: Metadata = {
   title: "Material Table - Unstyled Table",
   description: "Material table with unstyeld table package.",
-};
+}
 
 interface RootLayoutProps {
-  children: React.ReactNode;
+  children: React.ReactNode
 }
 
 export default function RootLayout({ children }: RootLayoutProps) {
@@ -29,5 +30,5 @@ export default function RootLayout({ children }: RootLayoutProps) {
         </body>
       </html>
     </>
-  );
+  )
 }

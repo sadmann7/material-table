@@ -1,8 +1,9 @@
-"use client";
+"use client"
 
-import { cn } from "@/lib/utils";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+
+import { cn } from "@/lib/utils"
 
 const navItems = [
   {
@@ -13,10 +14,10 @@ const navItems = [
     title: "Client Controlled",
     href: "/client-controlled",
   },
-];
+]
 
 export function SiteHeader() {
-  const pathname = usePathname();
+  const pathname = usePathname()
 
   return (
     <header className="sticky top-0 z-40 w-full bg-background">
@@ -40,5 +41,5 @@ export function SiteHeader() {
         </nav>
       </div>
     </header>
-  );
+  )
 }

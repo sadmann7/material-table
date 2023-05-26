@@ -1,73 +1,72 @@
-"use client";
+"use client"
 
-import type { Order, Sort } from "@/app/page";
-import { type Skater } from "@/lib/get-data";
-import { formatDate, formatPrice } from "@/lib/utils";
+import * as React from "react"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import {
-  Table,
-  TableCell,
-  TableRow,
-  TableHead,
-  TableBody,
-  Pagination,
-  PaletteSkeleton,
-  Skeleton,
-  TableContainer,
   Paper,
+  Skeleton,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
   TablePagination,
-} from "@mui/material";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import * as React from "react";
+  TableRow,
+} from "@mui/material"
 import {
   Table as MaterialTable,
   type ColumnDef,
   type ColumnSort,
   type VisibilityState,
-} from "unstyled-table";
+} from "unstyled-table"
+
+import { type Skater } from "@/lib/get-data"
+import { formatDate, formatPrice } from "@/lib/utils"
+import type { Order, Sort } from "@/app/page"
 
 interface ServerControlledTableProps {
-  data: Skater[];
-  pageCount?: number;
+  data: Skater[]
+  pageCount?: number
 }
 
 export function ServerControlledTable({
   data,
   pageCount,
 }: ServerControlledTableProps) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
 
   // This lets us update states without blocking the UI
   // Read more: https://react.dev/reference/react/useTransition#usage
-  const [isPending, startTransition] = React.useTransition();
+  const [isPending, startTransition] = React.useTransition()
 
-  const page = searchParams.get("page") ?? "1";
-  const items = searchParams.get("items") ?? "10";
-  const sort = (searchParams.get("sort") ?? "email") as Sort;
-  const order = searchParams.get("order") as Order | null;
-  const query = searchParams.get("query");
+  const page = searchParams.get("page") ?? "1"
+  const items = searchParams.get("items") ?? "10"
+  const sort = (searchParams.get("sort") ?? "email") as Sort
+  const order = searchParams.get("order") as Order | null
+  const query = searchParams.get("query")
 
   // create query string
   const createQueryString = React.useCallback(
     (params: Record<string, string | number | null>) => {
-      const newSearchParams = new URLSearchParams(searchParams.toString());
+      const newSearchParams = new URLSearchParams(searchParams.toString())
 
       for (const [key, value] of Object.entries(params)) {
         if (value === null) {
-          newSearchParams.delete(key);
+          newSearchParams.delete(key)
         } else {
-          newSearchParams.set(key, String(value));
+          newSearchParams.set(key, String(value))
         }
       }
 
-      return newSearchParams.toString();
+      return newSearchParams.toString()
     },
     [searchParams]
-  );
+  )
 
   // Handle row selection
-  const [rowSelection, setRowSelection] = React.useState({});
+  const [rowSelection, setRowSelection] = React.useState({})
 
   // Memoize the columns so they don't re-render on every render
   const columns = React.useMemo<ColumnDef<Skater, unknown>[]>(
@@ -115,14 +114,14 @@ export function ServerControlledTable({
       },
     ],
     []
-  );
+  )
 
   // Handle column visibility
   const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({});
+    React.useState<VisibilityState>({})
 
   // Handle server-side column (email) filtering
-  const [emailFilter, setEmailFilter] = React.useState(query ?? "");
+  const [emailFilter, setEmailFilter] = React.useState(query ?? "")
 
   // Handle server-side column sorting
   const [sorting] = React.useState<ColumnSort[]>([
@@ -130,7 +129,7 @@ export function ServerControlledTable({
       id: sort,
       desc: order === "desc" ? true : false,
     },
-  ]);
+  ])
 
   return (
     <React.Fragment>
@@ -139,7 +138,9 @@ export function ServerControlledTable({
           columns={columns}
           // The inline `[]` prevents re-rendering the table when the data changes.
           data={data ?? []}
-          // States controlled by the table
+          // Number of rows per page
+          itemsCount={Number(items)}
+          // The states controlled by the table
           state={{ columnVisibility, sorting }}
           // Handle global filtering
           // Handle column visibility
@@ -147,16 +148,17 @@ export function ServerControlledTable({
           // Handle server-side sorting
           manualPagination
           manualFiltering
-          itemsCount={Number(items)}
           renders={{
-            table: ({ children }) => <Table>{children}</Table>,
+            table: ({ children }) => (
+              <Table aria-label="Server controlled table">{children}</Table>
+            ),
             header: ({ children }) => <TableHead>{children}</TableHead>,
             headerRow: ({ children }) => <TableRow>{children}</TableRow>,
             headerCell: ({ children, header }) => (
               <TableCell
                 onClick={() => {
-                  const isSortable = header.column.getCanSort();
-                  const nextSortDirection = header.column.getNextSortingOrder();
+                  const isSortable = header.column.getCanSort()
+                  const nextSortDirection = header.column.getNextSortingOrder()
 
                   // Update the URL with the new sort order if the column is sortable
                   isSortable &&
@@ -167,8 +169,8 @@ export function ServerControlledTable({
                           sort: nextSortDirection ? header.column.id : null,
                           order: nextSortDirection ? nextSortDirection : null,
                         })}`
-                      );
-                    });
+                      )
+                    })
                 }}
               >
                 {children}
@@ -184,21 +186,22 @@ export function ServerControlledTable({
               <TablePagination
                 rowsPerPageOptions={[5, 10, 25]}
                 component="div"
-                count={Number(pageCount)}
+                count={pageCount ?? 0}
                 rowsPerPage={Number(items)}
-                page={Number(page) + 1}
-                onPageChange={(event, page) => {
+                // Subtract 1 from the page number because the table starts at page 0
+                page={Number(page) - 1}
+                onPageChange={(_, newPage) => {
                   startTransition(() => {
                     router.push(
                       `${pathname}?${createQueryString({
-                        page: page - 1,
+                        page: newPage + 1,
                         items,
                         sort,
                         order,
                         query,
                       })}`
-                    );
-                  });
+                    )
+                  })
                 }}
                 onRowsPerPageChange={(event) => {
                   startTransition(() => {
@@ -210,8 +213,8 @@ export function ServerControlledTable({
                         order,
                         query,
                       })}`
-                    );
-                  });
+                    )
+                  })
                 }}
               />
             ),
@@ -219,5 +222,5 @@ export function ServerControlledTable({
         />
       </TableContainer>
     </React.Fragment>
-  );
+  )
 }
