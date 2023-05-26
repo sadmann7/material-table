@@ -134,93 +134,90 @@ export function ServerControlledTable({
 
   return (
     <React.Fragment>
-      <Paper>
-        <TableContainer>
-          <MaterialTable
-            columns={columns}
-            // The inline `[]` prevents re-rendering the table when the data changes.
-            data={data ?? []}
-            // States controlled by the table
-            state={{ columnVisibility, sorting }}
-            // Handle global filtering
-            // Handle column visibility
-            setColumnVisibility={setColumnVisibility}
-            // Handle server-side sorting
-            manualPagination
-            manualFiltering
-            itemsCount={Number(items)}
-            renders={{
-              table: ({ children }) => <Table>{children}</Table>,
-              header: ({ children }) => <TableHead>{children}</TableHead>,
-              headerRow: ({ children }) => <TableRow>{children}</TableRow>,
-              headerCell: ({ children, header }) => (
-                <TableCell
-                  onClick={() => {
-                    const isSortable = header.column.getCanSort();
-                    const nextSortDirection =
-                      header.column.getNextSortingOrder();
+      <TableContainer component={Paper}>
+        <MaterialTable
+          columns={columns}
+          // The inline `[]` prevents re-rendering the table when the data changes.
+          data={data ?? []}
+          // States controlled by the table
+          state={{ columnVisibility, sorting }}
+          // Handle global filtering
+          // Handle column visibility
+          setColumnVisibility={setColumnVisibility}
+          // Handle server-side sorting
+          manualPagination
+          manualFiltering
+          itemsCount={Number(items)}
+          renders={{
+            table: ({ children }) => <Table>{children}</Table>,
+            header: ({ children }) => <TableHead>{children}</TableHead>,
+            headerRow: ({ children }) => <TableRow>{children}</TableRow>,
+            headerCell: ({ children, header }) => (
+              <TableCell
+                onClick={() => {
+                  const isSortable = header.column.getCanSort();
+                  const nextSortDirection = header.column.getNextSortingOrder();
 
-                    // Update the URL with the new sort order if the column is sortable
-                    isSortable &&
-                      startTransition(() => {
-                        router.push(
-                          `${pathname}?${createQueryString({
-                            page: page,
-                            sort: nextSortDirection ? header.column.id : null,
-                            order: nextSortDirection ? nextSortDirection : null,
-                          })}`
-                        );
-                      });
-                  }}
-                >
-                  {children}
-                </TableCell>
-              ),
-              body: ({ children }) => <TableBody>{children}</TableBody>,
-              bodyRow: ({ children }) => <TableRow>{children}</TableRow>,
-              bodyCell: ({ children }) => (
-                <TableCell>{isPending ? <Skeleton /> : children}</TableCell>
-              ),
-              filterInput: () => null,
-              paginationBar: () => (
-                <TablePagination
-                  rowsPerPageOptions={[5, 10, 25]}
-                  component="div"
-                  count={Number(pageCount)}
-                  rowsPerPage={Number(items)}
-                  page={Number(page) + 1}
-                  onPageChange={(event, currentPage) => {
+                  // Update the URL with the new sort order if the column is sortable
+                  isSortable &&
                     startTransition(() => {
                       router.push(
                         `${pathname}?${createQueryString({
-                          page: currentPage + 1,
-                          items,
-                          sort,
-                          order,
-                          query,
+                          page: page,
+                          sort: nextSortDirection ? header.column.id : null,
+                          order: nextSortDirection ? nextSortDirection : null,
                         })}`
                       );
                     });
-                  }}
-                  onRowsPerPageChange={(event) => {
-                    startTransition(() => {
-                      router.push(
-                        `${pathname}?${createQueryString({
-                          page,
-                          items: event.target.value,
-                          sort,
-                          order,
-                          query,
-                        })}`
-                      );
-                    });
-                  }}
-                />
-              ),
-            }}
-          />
-        </TableContainer>
-      </Paper>
+                }}
+              >
+                {children}
+              </TableCell>
+            ),
+            body: ({ children }) => <TableBody>{children}</TableBody>,
+            bodyRow: ({ children }) => <TableRow>{children}</TableRow>,
+            bodyCell: ({ children }) => (
+              <TableCell>{isPending ? <Skeleton /> : children}</TableCell>
+            ),
+            filterInput: () => null,
+            paginationBar: () => (
+              <TablePagination
+                rowsPerPageOptions={[5, 10, 25]}
+                component="div"
+                count={Number(pageCount)}
+                rowsPerPage={Number(items)}
+                page={Number(page) + 1}
+                onPageChange={(event, page) => {
+                  startTransition(() => {
+                    router.push(
+                      `${pathname}?${createQueryString({
+                        page: page - 1,
+                        items,
+                        sort,
+                        order,
+                        query,
+                      })}`
+                    );
+                  });
+                }}
+                onRowsPerPageChange={(event) => {
+                  startTransition(() => {
+                    router.push(
+                      `${pathname}?${createQueryString({
+                        page,
+                        items: event.target.value,
+                        sort,
+                        order,
+                        query,
+                      })}`
+                    );
+                  });
+                }}
+              />
+            ),
+          }}
+        />
+      </TableContainer>
     </React.Fragment>
   );
 }

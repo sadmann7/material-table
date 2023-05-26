@@ -1,3 +1,9 @@
+import { twMerge } from "tailwind-merge";
+
+// For merging tailwind classes
+export function cn(...inputs: (string | undefined | false | null)[]) {
+  return twMerge(inputs);
+}
 
 // For formatting the price column
 export function formatPrice(
@@ -7,12 +13,12 @@ export function formatPrice(
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency,
-  }).format(price)
+  }).format(price);
 }
 
 // For formatting the date column
 export function formatDate(date: Date) {
   return new Intl.DateTimeFormat("en-US", {
     dateStyle: "medium",
-  }).format(date)
+  }).format(date);
 }

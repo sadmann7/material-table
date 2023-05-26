@@ -20,13 +20,13 @@ const range = (len: number) => {
 
 const newSkater = (): Skater => {
   return {
-    name: faker.name.firstName(),
-    age: faker.datatype.number(40),
+    name: faker.person.firstName(),
+    age: faker.number.int({ min: 10, max: 60 }),
     email: faker.internet.email(),
-    stats: faker.datatype.number(5),
+    stats: faker.number.int({ min: 10, max: 100 }),
     stance:
       faker.helpers.shuffle<Skater["stance"]>(["mongo", "goofy"])[0] ?? "goofy",
-    deckPrice: faker.datatype.number(100),
+    deckPrice: faker.number.int({ min: 25, max: 100 }),
     createdAt: faker.date.past(),
   };
 };
