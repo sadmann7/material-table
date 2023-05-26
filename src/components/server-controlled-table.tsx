@@ -24,14 +24,16 @@ import { type Skater } from "@/lib/get-data"
 import { formatDate, formatPrice } from "@/lib/utils"
 import type { Order, Sort } from "@/app/page"
 
+import { DebouncedInput } from "./debounced-input"
+
 interface ServerControlledTableProps {
   data: Skater[]
-  pageCount?: number
+  count?: number
 }
 
 export function ServerControlledTable({
   data,
-  pageCount,
+  count,
 }: ServerControlledTableProps) {
   const router = useRouter()
   const pathname = usePathname()
@@ -133,6 +135,27 @@ export function ServerControlledTable({
 
   return (
     <React.Fragment>
+      <div className="mb-4 flex items-center justify-between">
+        <DebouncedInput
+          className="max-w-xs"
+          label="Search emails..."
+          variant="outlined"
+          value={emailFilter}
+          onChange={(value) => {
+            setEmailFilter(value.toString())
+            startTransition(() => {
+              router.push(
+                `${pathname}?${createQueryString({
+                  page,
+                  sort,
+                  order,
+                  query: value,
+                })}`
+              )
+            })
+          }}
+        />
+      </div>
       <TableContainer component={Paper}>
         <MaterialTable
           columns={columns}
@@ -186,11 +209,12 @@ export function ServerControlledTable({
               <TablePagination
                 rowsPerPageOptions={[5, 10, 25]}
                 component="div"
-                count={pageCount ?? 0}
+                // This is the total number of rows in the table, not the page count (which is `Math.ceil(count / items)`)
+                count={count ?? 0}
                 rowsPerPage={Number(items)}
                 // Subtract 1 from the page number because the table starts at page 0
                 page={Number(page) - 1}
-                onPageChange={(_, newPage) => {
+                onPageChange={(e, newPage) => {
                   startTransition(() => {
                     router.push(
                       `${pathname}?${createQueryString({

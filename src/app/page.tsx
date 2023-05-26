@@ -33,12 +33,9 @@ export default async function IndexPage({ searchParams }: IndexPageProps) {
     query: query,
   })
 
-  // Page count
-  const pageCount = Math.ceil(dataQuery.count / limit)
-
   return (
     <main className="container grid items-center px-6 py-5">
-      <ServerControlledTable data={dataQuery.data} pageCount={pageCount} />
+      <ServerControlledTable data={dataQuery.data} count={dataQuery.count} />
     </main>
   )
 }
