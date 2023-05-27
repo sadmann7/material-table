@@ -3,6 +3,7 @@
 import * as React from "react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import {
+  MenuItem,
   Paper,
   Skeleton,
   Table,
@@ -13,6 +14,7 @@ import {
   TablePagination,
   TableRow,
 } from "@mui/material"
+import { MoreHorizontal } from "lucide-react"
 import {
   Table as MaterialTable,
   type ColumnDef,
@@ -25,6 +27,7 @@ import { formatDate, formatPrice } from "@/lib/utils"
 import type { Order, Sort } from "@/app/page"
 
 import { DebouncedInput } from "./debounced-input"
+import { DropdownMenu } from "./dropdown-menu"
 
 interface ServerControlledTableProps {
   data: Skater[]
@@ -114,6 +117,33 @@ export function ServerControlledTable({
         enableColumnFilter: false,
         enableGlobalFilter: false,
       },
+      {
+        // Column for row actions
+        id: "actions",
+        cell: ({ row }) => {
+          const skater = row.original
+
+          return (
+            <DropdownMenu
+              buttonChildren={<MoreHorizontal className="h-4 w-4" />}
+              items={[
+                {
+                  label: "Copy skater ID",
+                  onClick: () => {
+                    void navigator.clipboard.writeText(skater.id)
+                  },
+                },
+                {
+                  label: "View skater",
+                },
+                {
+                  label: "View deck details",
+                },
+              ]}
+            />
+          )
+        },
+      },
     ],
     []
   )
@@ -165,12 +195,13 @@ export function ServerControlledTable({
           itemsCount={Number(items)}
           // The states controlled by the table
           state={{ columnVisibility, sorting }}
-          // Handle global filtering
           // Handle column visibility
           setColumnVisibility={setColumnVisibility}
-          // Handle server-side sorting
+          // This lets us use controlled pagination
           manualPagination
+          // This lets us use controlled filtering
           manualFiltering
+          // Table renderers
           renders={{
             table: ({ children }) => (
               <Table aria-label="Server controlled table">{children}</Table>

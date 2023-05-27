@@ -1,6 +1,7 @@
 import { faker } from "@faker-js/faker"
 
 export type Skater = {
+  id: string
   name: string
   age: number
   email: string
@@ -20,6 +21,7 @@ const range = (len: number) => {
 
 const newSkater = (): Skater => {
   return {
+    id: faker.string.uuid(),
     name: faker.person.firstName(),
     age: faker.number.int({ min: 10, max: 60 }),
     email: faker.internet.email(),
@@ -44,7 +46,7 @@ export function makeData(...lens: number[]) {
   return makeDataLevel()
 }
 
-export const data = makeData(100)
+export const data = makeData(240)
 
 export async function getData(options: {
   limit: number
