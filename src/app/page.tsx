@@ -1,3 +1,4 @@
+import { prisma } from "@/lib/db"
 import { getData } from "@/lib/get-data"
 import { ServerControlledTable } from "@/components/server-controlled-table"
 
@@ -23,19 +24,24 @@ export default async function IndexPage({ searchParams }: IndexPageProps) {
   const offset = page ? (parseInt(page) - 1) * limit : 1
 
   // Get skaters and total skaters count in a single query
-  await new Promise((resolve) => setTimeout(resolve, 1000))
-
-  const dataQuery = await getData({
-    limit: limit,
-    offset: offset,
-    sort: sort,
-    order: order,
-    query: query,
-  })
+  const [skaters, totalSkaters] = await prisma.$transaction([
+    prisma.skater.findMany({
+      // For server-side pagination
+      take: query ? undefined : limit,
+      skip: query ? undefined : offset,
+      // For server-side filtering
+      where: {
+        email: query ? { contains: query } : undefined,
+      },
+      // For server-side sorting
+      orderBy: sort ? { [sort]: order ?? "asc" } : undefined,
+    }),
+    prisma.skater.count(),
+  ])
 
   return (
     <main className="container grid items-center px-6 py-5">
-      <ServerControlledTable data={dataQuery.data} count={dataQuery.count} />
+      <ServerControlledTable data={skaters} count={totalSkaters} />
     </main>
   )
 }

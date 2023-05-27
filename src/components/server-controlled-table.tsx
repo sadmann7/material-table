@@ -13,6 +13,7 @@ import {
   TablePagination,
   TableRow,
 } from "@mui/material"
+import { type Skater } from "@prisma/client"
 import { MoreHorizontal } from "lucide-react"
 import {
   Table as MaterialTable,
@@ -21,7 +22,6 @@ import {
   type VisibilityState,
 } from "unstyled-table"
 
-import { type Skater } from "@/lib/get-data"
 import { formatDate, formatPrice } from "@/lib/utils"
 import type { Order, Sort } from "@/app/page"
 
@@ -177,7 +177,6 @@ export function ServerControlledTable({
               router.push(
                 `${pathname}?${createQueryString({
                   page,
-                  items,
                   sort,
                   order,
                   query: value,
@@ -211,6 +210,8 @@ export function ServerControlledTable({
             headerRow: ({ children }) => <TableRow>{children}</TableRow>,
             headerCell: ({ children, header }) => (
               <TableCell
+                className="whitespace-nowrap"
+                // Handle server-side column sorting
                 onClick={() => {
                   const isSortable = header.column.getCanSort()
                   const nextSortDirection = header.column.getNextSortingOrder()

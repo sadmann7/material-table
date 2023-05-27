@@ -1,9 +1,9 @@
 "use client"
 
+import { type Skater } from "@prisma/client"
 import { MoreHorizontal } from "lucide-react"
 import { type ColumnDef } from "unstyled-table"
 
-import { type Skater } from "@/lib/get-data"
 import { formatDate, formatPrice } from "@/lib/utils"
 
 import { DropdownMenu } from "./dropdown-menu"
