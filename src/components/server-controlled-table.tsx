@@ -3,7 +3,6 @@
 import * as React from "react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import {
-  MenuItem,
   Paper,
   Skeleton,
   Table,
@@ -125,6 +124,7 @@ export function ServerControlledTable({
 
           return (
             <DropdownMenu
+              title="Actions"
               buttonChildren={<MoreHorizontal className="h-4 w-4" />}
               items={[
                 {
@@ -165,7 +165,7 @@ export function ServerControlledTable({
 
   return (
     <React.Fragment>
-      <div className="mb-4 flex items-center justify-between">
+      <div className="flex items-center justify-between gap-5 py-4">
         <DebouncedInput
           className="max-w-xs"
           label="Search emails..."
@@ -230,7 +230,22 @@ export function ServerControlledTable({
                 {children}
               </TableCell>
             ),
-            body: ({ children }) => <TableBody>{children}</TableBody>,
+            body: ({ children }) => (
+              <TableBody>
+                {data.length
+                  ? children
+                  : !isPending && (
+                      <TableRow>
+                        <TableCell
+                          colSpan={columns.length}
+                          className="h-24 text-center"
+                        >
+                          No results.
+                        </TableCell>
+                      </TableRow>
+                    )}
+              </TableBody>
+            ),
             bodyRow: ({ children }) => <TableRow>{children}</TableRow>,
             bodyCell: ({ children }) => (
               <TableCell>{isPending ? <Skeleton /> : children}</TableCell>

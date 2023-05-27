@@ -2,6 +2,7 @@ import * as React from "react"
 import { Button, Fade, Menu, MenuItem } from "@mui/material"
 
 interface DropdownMenuProps {
+  title?: string
   buttonChildren: React.ReactNode
   items: {
     label: string
@@ -9,7 +10,11 @@ interface DropdownMenuProps {
   }[]
 }
 
-export function DropdownMenu({ buttonChildren, items }: DropdownMenuProps) {
+export function DropdownMenu({
+  title,
+  buttonChildren,
+  items,
+}: DropdownMenuProps) {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null)
   const open = Boolean(anchorEl)
 
@@ -24,6 +29,7 @@ export function DropdownMenu({ buttonChildren, items }: DropdownMenuProps) {
     <div>
       <Button
         id="fade-button"
+        aria-label="Open menu"
         aria-controls={open ? "fade-menu" : undefined}
         aria-haspopup="true"
         aria-expanded={open ? "true" : undefined}
@@ -41,6 +47,7 @@ export function DropdownMenu({ buttonChildren, items }: DropdownMenuProps) {
         onClose={handleClose}
         TransitionComponent={Fade}
       >
+        {title && <MenuItem disabled>{title}</MenuItem>}
         {items.map((item) => (
           <MenuItem
             key={item.label}
