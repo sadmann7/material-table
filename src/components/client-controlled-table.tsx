@@ -2,10 +2,12 @@
 
 import * as React from "react"
 import {
+  Paper,
   Skeleton,
   Table,
   TableBody,
   TableCell,
+  TableContainer,
   TableHead,
   TablePagination,
   TableRow,
@@ -46,73 +48,75 @@ export function ClientControlledTable<TData, TValue>({
       <div className="flex items-center justify-between gap-5 py-4">
         <DebouncedInput
           className="max-w-xs"
-          placeholder="Search emails..."
+          label="Search emails..."
           value={emailFilter}
           onChange={(value) => setEmailFilter(value.toString())}
         />
       </div>
-      <MaterialTable
-        columns={columns}
-        // The inline `[]` prevents re-rendering the table when the data changes.
-        data={data ?? []}
-        // States controlled by the table
-        state={{
-          columnVisibility,
-          // Default sorting state
-          sorting: [{ id: "email", desc: false }],
-        }}
-        // Handle column visibility
-        setColumnVisibility={setColumnVisibility}
-        renders={{
-          table: ({ children }) => <Table>{children}</Table>,
-          header: ({ children }) => <TableHead>{children}</TableHead>,
-          headerRow: ({ children }) => <TableRow>{children}</TableRow>,
-          headerCell: ({ children }) => (
-            <TableCell className="whitespace-nowrap">{children}</TableCell>
-          ),
-          body: ({ children }) => (
-            <TableBody>
-              {data.length
-                ? children
-                : !isPending && (
-                    <TableRow>
-                      <TableCell
-                        colSpan={columns.length}
-                        className="h-24 text-center"
-                      >
-                        No results.
-                      </TableCell>
-                    </TableRow>
-                  )}
-            </TableBody>
-          ),
-          bodyRow: ({ children }) => <TableRow>{children}</TableRow>,
-          bodyCell: ({ children }) => (
-            <TableCell>
-              {isPending ? <Skeleton className="h-6 w-20" /> : children}
-            </TableCell>
-          ),
-          filterInput: () => null,
-          // Custom pagination bar
-          paginationBar: ({ tableInstance }) => (
-            <TablePagination
-              rowsPerPageOptions={[5, 10, 25]}
-              component="div"
-              // This is the total number of rows in the table, not the page count (which is `Math.ceil(count / items)`)
-              count={data.length ?? 0}
-              rowsPerPage={tableInstance.getState().pagination.pageSize}
-              // Subtract 1 from the page number because the table starts at page 0
-              page={tableInstance.getState().pagination.pageIndex}
-              onPageChange={(e, newPage) => {
-                tableInstance.setPageIndex(newPage)
-              }}
-              onRowsPerPageChange={(event) => {
-                tableInstance.setPageSize(Number(event.target.value))
-              }}
-            />
-          ),
-        }}
-      />
+      <TableContainer component={Paper}>
+        <MaterialTable
+          columns={columns}
+          // The inline `[]` prevents re-rendering the table when the data changes.
+          data={data ?? []}
+          // States controlled by the table
+          state={{
+            columnVisibility,
+            // Default sorting state
+            sorting: [{ id: "email", desc: false }],
+          }}
+          // Handle column visibility
+          setColumnVisibility={setColumnVisibility}
+          renders={{
+            table: ({ children }) => <Table>{children}</Table>,
+            header: ({ children }) => <TableHead>{children}</TableHead>,
+            headerRow: ({ children }) => <TableRow>{children}</TableRow>,
+            headerCell: ({ children }) => (
+              <TableCell className="whitespace-nowrap">{children}</TableCell>
+            ),
+            body: ({ children }) => (
+              <TableBody>
+                {data.length
+                  ? children
+                  : !isPending && (
+                      <TableRow>
+                        <TableCell
+                          colSpan={columns.length}
+                          className="h-24 text-center"
+                        >
+                          No results.
+                        </TableCell>
+                      </TableRow>
+                    )}
+              </TableBody>
+            ),
+            bodyRow: ({ children }) => <TableRow>{children}</TableRow>,
+            bodyCell: ({ children }) => (
+              <TableCell>
+                {isPending ? <Skeleton className="h-6 w-20" /> : children}
+              </TableCell>
+            ),
+            filterInput: () => null,
+            // Custom pagination bar
+            paginationBar: ({ tableInstance }) => (
+              <TablePagination
+                rowsPerPageOptions={[5, 10, 25]}
+                component="div"
+                // This is the total number of rows in the table, not the page count (which is `Math.ceil(count / items)`)
+                count={data.length ?? 0}
+                rowsPerPage={tableInstance.getState().pagination.pageSize}
+                // Subtract 1 from the page number because the table starts at page 0
+                page={tableInstance.getState().pagination.pageIndex}
+                onPageChange={(e, newPage) => {
+                  tableInstance.setPageIndex(newPage)
+                }}
+                onRowsPerPageChange={(event) => {
+                  tableInstance.setPageSize(Number(event.target.value))
+                }}
+              />
+            ),
+          }}
+        />
+      </TableContainer>
     </React.Fragment>
   )
 }

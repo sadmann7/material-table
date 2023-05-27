@@ -1,4 +1,5 @@
 import { fontMono, fontSans } from "@/lib/fonts"
+import { cn } from "@/lib/utils"
 import { SiteHeader } from "@/components/site-header"
 
 import "@/styles/globals.css"
@@ -19,9 +20,11 @@ export default function RootLayout({ children }: RootLayoutProps) {
       <html lang="en" suppressHydrationWarning className="bg-background">
         <head />
         <body
-          className={`font-sans antialiased ${
-            (fontSans.variable, fontMono.variable)
-          }`}
+          className={cn(
+            "font-sans antialiased",
+            fontSans.variable,
+            fontMono.variable
+          )}
         >
           <div className="relative flex min-h-screen flex-col">
             <SiteHeader />
