@@ -177,6 +177,7 @@ export function ServerControlledTable({
               router.push(
                 `${pathname}?${createQueryString({
                   page,
+                  items,
                   sort,
                   order,
                   query: value,

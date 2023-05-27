@@ -49,8 +49,8 @@ export function makeData(...lens: number[]) {
 export const data = makeData(240)
 
 export async function getData(options: {
-  limit?: number
-  offset?: number
+  limit: number
+  offset: number
   sort?: keyof Skater
   order?: "asc" | "desc"
   query?: string
@@ -83,8 +83,7 @@ export async function getData(options: {
       })
     : filteredData
 
-  const paginatedData =
-    limit && offset ? sortedData.slice(offset, offset + limit) : sortedData
+  const paginatedData = sortedData.slice(offset, offset + limit)
 
   return {
     data: paginatedData,
