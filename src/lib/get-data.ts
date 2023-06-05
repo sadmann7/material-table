@@ -8,7 +8,6 @@ export type Skater = {
   stats: number
   stance: "mongo" | "goofy"
   deckPrice: number
-  createdAt?: Date
 }
 
 const range = (len: number) => {
@@ -29,7 +28,6 @@ const newSkater = (): Skater => {
     stance:
       faker.helpers.shuffle<Skater["stance"]>(["mongo", "goofy"])[0] ?? "goofy",
     deckPrice: faker.number.int({ min: 25, max: 100 }),
-    createdAt: faker.date.past(),
   }
 }
 
