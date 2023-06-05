@@ -3,7 +3,16 @@
 import * as React from "react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import {
+  Button,
+  Checkbox,
+  Divider,
+  FormControl,
+  FormControlLabel,
+  FormGroup,
+  InputLabel,
+  MenuItem,
   Paper,
+  Select,
   Skeleton,
   Table,
   TableBody,
@@ -14,18 +23,19 @@ import {
   TableRow,
 } from "@mui/material"
 import { type Skater } from "@prisma/client"
-import { MoreHorizontal } from "lucide-react"
+import { ChevronDown, MoreHorizontal } from "lucide-react"
 import {
   Table as MaterialTable,
   type ColumnDef,
   type ColumnSort,
-  type VisibilityState,
 } from "unstyled-table"
 
-import { formatDate, formatPrice } from "@/lib/utils"
-import type { Order, Sort } from "@/app/page"
+import { formatPrice } from "@/lib/utils"
+import { deleteSkatersAction } from "@/app/_actions/skater"
 
-import { DebouncedInput } from "./debounced-input"
+import { ControlledCheckbox } from "./controlled-checkbox"
+import { ControlledPopover } from "./controlled-popover"
+import { DebounceInput } from "./debounce-input"
 import { DropdownMenu } from "./dropdown-menu"
 
 interface ServerControlledTableProps {
@@ -47,9 +57,10 @@ export function ServerControlledTable({
 
   const page = searchParams.get("page") ?? "1"
   const items = searchParams.get("items") ?? "10"
-  const sort = (searchParams.get("sort") ?? "email") as Sort
-  const order = searchParams.get("order") as Order | null
-  const query = searchParams.get("query")
+  const sort = (searchParams.get("sort") ?? "email") as keyof Skater
+  const order = searchParams.get("order")
+  const email = searchParams.get("email")
+  const stance = searchParams.get("stance")
 
   // create query string
   const createQueryString = React.useCallback(
@@ -69,12 +80,35 @@ export function ServerControlledTable({
     [searchParams]
   )
 
-  // Handle row selection
-  const [rowSelection, setRowSelection] = React.useState({})
-
   // Memoize the columns so they don't re-render on every render
   const columns = React.useMemo<ColumnDef<Skater, unknown>[]>(
     () => [
+      {
+        // Column for row selection
+        id: "select",
+        header: ({ table }) => (
+          <ControlledCheckbox
+            checked={table.getIsAllPageRowsSelected()}
+            onCheckedChange={(value) => {
+              table.toggleAllPageRowsSelected(!!value)
+            }}
+            aria-label="Select all"
+          />
+        ),
+        cell: ({ row }) => (
+          <ControlledCheckbox
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => {
+              row.toggleSelected(!!value)
+            }}
+            aria-label="Select row"
+          />
+        ),
+        // Disable column sorting for this column
+        enableSorting: false,
+        // Remove column from column visibility state
+        enableHiding: false,
+      },
       {
         accessorKey: "name",
         header: "Name",
@@ -108,17 +142,10 @@ export function ServerControlledTable({
         cell: ({ row }) => formatPrice(row.getValue("deckPrice")),
       },
       {
-        accessorKey: "createdAt",
-        header: "Created At",
-        // Cell value formatting
-        cell: ({ row }) => formatDate(row.getValue("createdAt")),
-        // Date column can not be filtered because dates are not unique
-        enableColumnFilter: false,
-        enableGlobalFilter: false,
-      },
-      {
         // Column for row actions
         id: "actions",
+        // Remove column from column visibility state
+        enableHiding: false,
         cell: ({ row }) => {
           const skater = row.original
 
@@ -148,12 +175,8 @@ export function ServerControlledTable({
     []
   )
 
-  // Handle column visibility
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({})
-
   // Handle server-side column (email) filtering
-  const [emailFilter, setEmailFilter] = React.useState(query ?? "")
+  const [emailFilter, setEmailFilter] = React.useState(email ?? "")
 
   // Handle server-side column sorting
   const [sorting] = React.useState<ColumnSort[]>([
@@ -164,28 +187,7 @@ export function ServerControlledTable({
   ])
 
   return (
-    <React.Fragment>
-      <div className="flex items-center justify-between gap-5 py-4">
-        <DebouncedInput
-          className="max-w-xs"
-          label="Search emails..."
-          variant="outlined"
-          value={emailFilter}
-          onChange={(value) => {
-            setEmailFilter(value.toString())
-            startTransition(() => {
-              router.push(
-                `${pathname}?${createQueryString({
-                  page,
-                  sort,
-                  order,
-                  query: value,
-                })}`
-              )
-            })
-          }}
-        />
-      </div>
+    <div className="w-full overflow-auto">
       <TableContainer component={Paper}>
         <MaterialTable
           columns={columns}
@@ -194,18 +196,182 @@ export function ServerControlledTable({
           // Number of rows per page
           itemsCount={Number(items)}
           // The states controlled by the table
-          state={{ columnVisibility, sorting }}
-          // Handle column visibility
-          setColumnVisibility={setColumnVisibility}
-          // This lets us use controlled pagination
+          state={{ sorting }}
+          // Enable controlled states
           manualPagination
-          // This lets us use controlled filtering
-          manualFiltering
           // Table renderers
           renders={{
-            table: ({ children }) => (
-              <Table aria-label="Server controlled table">{children}</Table>
-            ),
+            table: ({ children, tableInstance }) => {
+              return (
+                <div className="w-full p-1">
+                  <DebounceInput
+                    className="max-w-xs"
+                    placeholder="Search all columns..."
+                    value={tableInstance.getState().globalFilter as string}
+                    onChange={(value) => {
+                      tableInstance.setGlobalFilter(value)
+                    }}
+                  />
+                  <div className="flex items-center gap-2 py-4">
+                    <div className="flex w-full max-w-xs items-center gap-2">
+                      <DebounceInput
+                        className="max-w-xs"
+                        placeholder="Search emails..."
+                        value={emailFilter}
+                        onChange={(value) => {
+                          setEmailFilter(String(value))
+                          startTransition(() => {
+                            router.push(
+                              `${pathname}?${createQueryString({
+                                page: 1,
+                                email: String(value),
+                              })}`
+                            )
+                          })
+                        }}
+                      />
+                      <FormControl fullWidth className="max-w-[100px]">
+                        <InputLabel id="stance-select-label">Stance</InputLabel>
+                        <Select
+                          labelId="stance-select-label"
+                          id="stance-select-id"
+                          label="Stance"
+                        >
+                          <FormGroup>
+                            <FormControlLabel
+                              className="px-4"
+                              control={
+                                <Checkbox
+                                  checked={stance === "mongo"}
+                                  onChange={(e) => {
+                                    startTransition(() => {
+                                      router.push(
+                                        `${pathname}?${createQueryString({
+                                          page: 1,
+                                          stance: e.target.value
+                                            ? "mongo"
+                                            : "goofy",
+                                        })}`
+                                      )
+                                    })
+                                  }}
+                                />
+                              }
+                              label="Mongo"
+                            />
+                            <FormControlLabel
+                              className="px-4"
+                              control={
+                                <Checkbox
+                                  checked={stance === "goofy"}
+                                  onChange={(e) => {
+                                    startTransition(() => {
+                                      router.push(
+                                        `${pathname}?${createQueryString({
+                                          page: 1,
+                                          stance: e.target.value
+                                            ? "goofy"
+                                            : "mongo",
+                                        })}`
+                                      )
+                                    })
+                                  }}
+                                />
+                              }
+                              label="Goofy"
+                            />
+                          </FormGroup>
+                          {stance && (
+                            <div>
+                              <Divider />
+                              <MenuItem
+                                onClick={() => {
+                                  startTransition(() => {
+                                    router.push(
+                                      `${pathname}?${createQueryString({
+                                        page: 1,
+                                        stance: null,
+                                      })}`
+                                    )
+                                  })
+                                }}
+                              >
+                                Clear Filter
+                              </MenuItem>
+                            </div>
+                          )}
+                        </Select>
+                      </FormControl>
+                    </div>
+                    <div className="ml-auto flex items-center space-x-2">
+                      <Button
+                        variant="contained"
+                        className="bg-red-500 normal-case text-white hover:bg-red-600"
+                        onClick={() => {
+                          startTransition(async () => {
+                            // Delete the selected rows
+                            try {
+                              await deleteSkatersAction(
+                                tableInstance
+                                  .getSelectedRowModel()
+                                  .rows.map((row) => row.original.id)
+                              )
+                            } catch (error) {
+                              console.error(error)
+                            }
+
+                            // Reset row selection
+                            tableInstance.resetRowSelection()
+                          })
+                        }}
+                        disabled={
+                          !tableInstance.getSelectedRowModel().rows.length ||
+                          isPending
+                        }
+                      >
+                        Delete
+                      </Button>
+                      <ControlledPopover
+                        buttonChildren={
+                          <>
+                            Columns <ChevronDown className="ml-2 h-4 w-4" />
+                          </>
+                        }
+                        menuContent={
+                          <FormGroup>
+                            {tableInstance
+                              .getAllColumns()
+                              .filter((column) => column.getCanHide())
+                              .map((column) => {
+                                return (
+                                  <FormControlLabel
+                                    key={column.id}
+                                    className="px-4 capitalize"
+                                    control={
+                                      <ControlledCheckbox
+                                        checked={column.getIsVisible()}
+                                        onCheckedChange={(value) => {
+                                          column.toggleVisibility(!!value)
+                                        }}
+                                      />
+                                    }
+                                    label={column.id}
+                                  />
+                                )
+                              })}
+                          </FormGroup>
+                        }
+                      />
+                    </div>
+                  </div>
+                  <div className="rounded-md border">
+                    <Table aria-label="Server controlled table">
+                      {children}
+                    </Table>
+                  </div>
+                </div>
+              )
+            },
             header: ({ children }) => <TableHead>{children}</TableHead>,
             headerRow: ({ children }) => <TableRow>{children}</TableRow>,
             headerCell: ({ children, header }) => (
@@ -253,46 +419,52 @@ export function ServerControlledTable({
               <TableCell>{isPending ? <Skeleton /> : children}</TableCell>
             ),
             filterInput: () => null,
-            paginationBar: () => (
-              <TablePagination
-                rowsPerPageOptions={[5, 10, 25]}
-                component="div"
-                // This is the total number of rows in the table, not the page count (which is `Math.ceil(count / items)`)
-                count={count ?? 0}
-                rowsPerPage={Number(items)}
-                // Subtract 1 from the page number because the table starts at page 0
-                page={Number(page) - 1}
-                onPageChange={(e, newPage) => {
-                  startTransition(() => {
-                    router.push(
-                      `${pathname}?${createQueryString({
-                        page: newPage + 1,
-                        items,
-                        sort,
-                        order,
-                        query,
-                      })}`
-                    )
-                  })
-                }}
-                onRowsPerPageChange={(event) => {
-                  startTransition(() => {
-                    router.push(
-                      `${pathname}?${createQueryString({
-                        page,
-                        items: event.target.value,
-                        sort,
-                        order,
-                        query,
-                      })}`
-                    )
-                  })
-                }}
-              />
+            paginationBar: ({ tableInstance }) => (
+              <div className="flex flex-col-reverse items-center gap-4 py-4 md:flex-row">
+                <div className="flex-1 text-sm font-medium">
+                  {tableInstance.getFilteredSelectedRowModel().rows.length} of{" "}
+                  {items} row(s) selected.
+                </div>
+                <TablePagination
+                  rowsPerPageOptions={[5, 10, 25]}
+                  component="div"
+                  // This is the total number of rows in the table, not the page count (which is `Math.ceil(count / items)`)
+                  count={count ?? 0}
+                  rowsPerPage={Number(items)}
+                  // Subtract 1 from the page number because the table starts at page 0
+                  page={Number(page) - 1}
+                  onPageChange={(e, newPage) => {
+                    startTransition(() => {
+                      router.push(
+                        `${pathname}?${createQueryString({
+                          page: newPage + 1,
+                          items,
+                          sort,
+                          order,
+                          email,
+                        })}`
+                      )
+                    })
+                  }}
+                  onRowsPerPageChange={(event) => {
+                    startTransition(() => {
+                      router.push(
+                        `${pathname}?${createQueryString({
+                          page,
+                          items: event.target.value,
+                          sort,
+                          order,
+                          email,
+                        })}`
+                      )
+                    })
+                  }}
+                />
+              </div>
             ),
           }}
         />
       </TableContainer>
-    </React.Fragment>
+    </div>
   )
 }

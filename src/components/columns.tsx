@@ -4,11 +4,38 @@ import { type Skater } from "@prisma/client"
 import { MoreHorizontal } from "lucide-react"
 import { type ColumnDef } from "unstyled-table"
 
-import { formatDate, formatPrice } from "@/lib/utils"
+import { formatPrice } from "@/lib/utils"
 
+import { ControlledCheckbox } from "./controlled-checkbox"
 import { DropdownMenu } from "./dropdown-menu"
 
 export const columns: ColumnDef<Skater, unknown>[] = [
+  {
+    // Column for row selection
+    id: "select",
+    header: ({ table }) => (
+      <ControlledCheckbox
+        checked={table.getIsAllPageRowsSelected()}
+        onCheckedChange={(value) => {
+          table.toggleAllPageRowsSelected(!!value)
+        }}
+        aria-label="Select all"
+      />
+    ),
+    cell: ({ row }) => (
+      <ControlledCheckbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => {
+          row.toggleSelected(!!value)
+        }}
+        aria-label="Select row"
+      />
+    ),
+    // Disable column sorting for this column
+    enableSorting: false,
+    // Remove column from column visibility state
+    enableHiding: false,
+  },
   {
     accessorKey: "name",
     header: "Name",
@@ -42,17 +69,10 @@ export const columns: ColumnDef<Skater, unknown>[] = [
     cell: ({ row }) => formatPrice(row.getValue("deckPrice")),
   },
   {
-    accessorKey: "createdAt",
-    header: "Created At",
-    // Cell value formatting
-    cell: ({ row }) => formatDate(row.getValue("createdAt")),
-    // Date column can not be filtered because dates are not unique
-    enableColumnFilter: false,
-    enableGlobalFilter: false,
-  },
-  {
     // Column for row actions
     id: "actions",
+    // Disable column visibility for this column
+    enableHiding: false,
     cell: ({ row }) => {
       const skater = row.original
 
